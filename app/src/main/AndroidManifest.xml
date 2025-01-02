@@ -5,6 +5,11 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY"/>
+
+    <uses-feature android:name="android.hardware.telephony" android:required="false" />
+
 
     <application
         android:allowBackup="true"
@@ -19,7 +24,7 @@
 
 
         <activity
-            android:name=".pages.AddExpense"
+            android:name=".pages.expense_module.AddExpense"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -30,7 +35,7 @@
 
 
         <activity
-            android:name=".pages.ExpenseList"
+            android:name=".pages.expenseList_module.ExpenseList"
             android:exported="true">
         </activity>
 

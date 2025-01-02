@@ -3,6 +3,7 @@ package com.example.counts.local_db
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.example.counts.objects.DateTimeUtils
 import java.util.Calendar
 
 
@@ -12,7 +13,7 @@ data class CountModel(
     var id: Int = 0,
 
     @ColumnInfo(name = "time")
-    var currentDate: String  = Calendar.getInstance().time.toString(),
+    var currentDate: String  = DateTimeUtils().getFullDateAndTime(),
 
     @ColumnInfo(name = "amount")
     var amount: Float = 0.0f,

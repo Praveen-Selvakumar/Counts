@@ -1,14 +1,18 @@
-package com.example.counts.pages
+package com.example.counts.pages.expense_module
 
+import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,6 +26,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -45,18 +50,58 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.example.counts.R
 import com.example.counts.local_db.CountModel
 import com.example.counts.local_db.RoomDB
+import com.example.counts.local_db.SharedPrefs
+import com.example.counts.pages.expenseList_module.ExpenseList
 
 class AddExpense : ComponentActivity() {
+
+    private val REQUEST_CODE = 100
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+
+            if (ContextCompat.checkSelfPermission(
+                    this@AddExpense,
+                    android.Manifest.permission.RECEIVE_SMS
+                )
+                != PackageManager.PERMISSION_GRANTED
+            ) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(
+                        android.Manifest.permission.READ_SMS,
+                        android.Manifest.permission.RECEIVE_SMS
+                    ),
+                    REQUEST_CODE
+                )
+            } else {
+                Toast.makeText(this, "SMS Tracking", Toast.LENGTH_SHORT).show()
+            }
+
             pageContent(context = this@AddExpense)
 
+        }
+
+
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this@AddExpense, "Permission Granted", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -69,6 +114,17 @@ class AddExpense : ComponentActivity() {
 
         var count by rememberSaveable(stateSaver = TextFieldValue.Saver) {
             mutableStateOf(TextFieldValue(""))
+        }
+
+        val savedLimitAmount = SharedPrefs().getFromSharedPreferences(this@AddExpense) as Float
+
+        var amountLimit by rememberSaveable(stateSaver = TextFieldValue.Saver) {
+            mutableStateOf(
+                TextFieldValue(
+                    if (savedLimitAmount > 0.0f
+                    ) "${savedLimitAmount} INR" else ""
+                )
+            )
         }
 
         var isError: Boolean = false;
@@ -126,6 +182,7 @@ class AddExpense : ComponentActivity() {
                         )
                     )
                     Spacer(Modifier.height(20.dp))
+
                     TextField(
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         value = count,
@@ -146,67 +203,142 @@ class AddExpense : ComponentActivity() {
                         )
                     )
 
+                    Spacer(Modifier.height(20.dp))
 
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
 
-                    Spacer(Modifier.height(30.dp))
-                    Button(
-                        onClick = {
+                        Button(
+                            onClick = {
 
-                            isError = isFieldEmpty(
-                                reason = reason.text.toString(),
-                                amount = count.text.toString()
-                            )
+                                isError = isFieldEmpty(
+                                    reason = reason.text.toString(),
+                                    amount = count.text.toString()
+                                )
 
-                            if (!isError) {
-                                //ADD
-                                val model = CountModel().apply {
-                                    this.amount = count.text.toFloat()
-                                    this.why = reason.text.toString()
+                                if (!isError) {
+                                    //ADD
+                                    val model = CountModel().apply {
+                                        this.amount = count.text.toFloat()
+                                        this.why = reason.text.toString()
+                                    }
+
+                                    dao?.addExpense(model)
+                                    count = count.copy(text = "")
+                                    reason = reason.copy(text = "")
+                                } else {
+                                    Toast.makeText(
+                                        this@AddExpense,
+                                        "Please fill all details!",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
                                 }
 
-                                dao?.addExpense(model)
-                                count = count.copy(text = "")
-                                reason = reason.copy(text = "")
-                            } else {
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                contentColor = Color.White,
+                                containerColor = Color.Green
+                            ),
+                            elevation = ButtonDefaults.buttonElevation(defaultElevation = 10.dp),
+                        ) {
+                            Text(text = "ADD EXPENSE")
+                        }
+
+                        Button(
+                            onClick = {
+                                startActivity(Intent(this@AddExpense, ExpenseList::class.java))
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                contentColor = Color.White,
+                                containerColor = Color.Green
+                            ),
+                            elevation = ButtonDefaults.buttonElevation(defaultElevation = 10.dp),
+                        ) {
+                            Text(text = "EXPENSE LIST")
+                        }
+                    }
+
+                    Spacer(Modifier.height(20.dp))
+                    Divider(
+                        color = Color.Gray,       // Divider color
+                        thickness = 0.5.dp,       // Reduced thickness to 0.5.dp
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 10.dp, end = 10.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                    ) {
+                        TextField(
+                            modifier = Modifier.weight(1.0f),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            value = amountLimit,
+                            shape = RoundedCornerShape(10.dp),
+                            isError = isError,
+                            onValueChange = {
+                                amountLimit = it
+                            },
+                            label = {
+                                Text(
+                                    "Enter amount ?",
+                                    fontFamily = FontFamily(Font(R.font.poppins_regular))
+                                )
+                            },
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent
+                            )
+                        )
+
+                        Button(
+                            onClick = {
+                                SharedPrefs().saveToSharedPreferences(
+                                    this@AddExpense,
+                                    amountLimit.text.toFloat()
+                                )
                                 Toast.makeText(
                                     this@AddExpense,
-                                    "Please fill all details!",
+                                    "Amount Saved\${ amountLimit.text}",
                                     Toast.LENGTH_SHORT
-                                ).show()
-                            }
+                                )
+                                    .show()
+                            },
+                            modifier = Modifier
+                                .weight(0.5f)
+                                .padding(top = 10.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                contentColor = Color.White,
+                                containerColor = Color.Green
+                            ),
+                            elevation = ButtonDefaults.buttonElevation(defaultElevation = 10.dp),
+                        ) {
+                            Text(text = if (savedLimitAmount > 0.0f) "Save" else "Edit")
+                        }
 
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            contentColor = Color.White,
-                            containerColor = Color.Green
-                        ),
-                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 10.dp),
-                    ) {
-                        Text(text = "ADD EXPENSE")
                     }
 
-                    Spacer(Modifier.height(80.dp))
-
-                    Button(
-                        onClick = {
-                            startActivity(Intent(this@AddExpense, ExpenseList::class.java))
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            contentColor = Color.White,
-                            containerColor = Color.Green
-                        ),
-                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 10.dp),
-                    ) {
-                        Text(text = "EXPENSE LIST")
-                    }
 
                 }
             }
             cornerDecoration()
 
-
         }
 
+    }
+
+    @Composable
+    private fun makeLimitNotify(context: Context) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+        ) {
+
+
+        }
     }
 
 
@@ -288,7 +420,6 @@ class AddExpense : ComponentActivity() {
                     color = MaterialTheme.colorScheme.error
                 )
             }
-
         }
 
 
