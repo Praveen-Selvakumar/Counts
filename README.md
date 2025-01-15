@@ -22,4 +22,4 @@ A modern toolkit for building UI in Android, replacing the traditional XML layou
 Used for maintaining local data storage and preferences seamlessly.
 
 
-(Note :- Still commits and deployements are on progress)
+(Note :- Still commits and deployements are on progress and most of the recent commits will be on "feature/dev" branch.)
