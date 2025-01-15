@@ -8,7 +8,7 @@ import androidx.room.Update
 
 
 @Dao
-interface Dao {
+interface ExpenseDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun addExpense(model : CountModel)
@@ -16,8 +16,10 @@ interface Dao {
     @Update
     fun UpdateExpense(model : CountModel)
 
-
     @Query("SELECT * FROM count")
     fun  getExpense():  List<CountModel>
+
+    @Query("DELETE FROM COUNT WHERE id = :id")
+    fun deleteSpecificExpense(id : Int)
 
 }

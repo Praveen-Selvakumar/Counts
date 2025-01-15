@@ -8,8 +8,7 @@ import androidx.room.RoomDatabase
 
 @Database(entities = arrayOf(CountModel::class),  version = 1)
 abstract class RoomDB : RoomDatabase() {
-
-    abstract fun userDao(): Dao
+    abstract fun userDao(): ExpenseDao
 
     companion object{
         private  var INSTANCE  : RoomDB? = null;

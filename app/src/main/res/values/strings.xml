@@ -1,3 +1,6 @@
 <resources>
-    <string name="app_name">Counts</string>
+    <string name="app_name">Countss</string>
+
+
+    <string name="count">COUNT</string>
 </resources>
